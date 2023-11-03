@@ -11,28 +11,36 @@ services:
 
   proxy:
     build:
+      # point to the proxy Dockerfile
       context: ./docker/proxy
     restart: always
     depends_on:
       - app
     ports:
+      # http
       - 80:80
+      # https
       - 443:443
     volumes:
-      - certbot-web:/vol/www
+      # volumes persist on the server unless we explicitly delete them
+      - certbot-web:/vol/www # shares the challenge
       - proxy-dhparams:/vol/proxy
-      - certbot-certs:/etc/letsencrypt
+      - certbot-certs:/etc/letsencrypt # stores the certificates
     environment:
       - DOMAIN=${DOMAIN}
 
+  # used to retrieve the initial certificates and also renew certificates.
+  # This is skipped on app startup. We do 'docker-compose up'. We can run it when we want to by specifying the command directly.
   certbot:
     build:
       context: ./docker/certbot
+    # most of the time we will skip certbot on startup. It only needs to be run on renewal but we define it as a service here so that it can easily be used through the docker-compose command and also have access to the volumes.
     command: echo "Skipping..."
     environment:
       - EMAIL=${ACME_DEFAULT_EMAIL}
       - DOMAIN=${DOMAIN}
     volumes:
+      # these volumes match the proxy volumes
       - certbot-web:/vol/www
       - certbot-certs:/etc/letsencrypt/
     depends_on:

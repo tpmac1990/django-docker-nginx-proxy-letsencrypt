@@ -4,6 +4,8 @@ services:
   app:
     build:
       context: .
+    # override the command in the Dockerfile which would run in uwsgi. Locally, we want to 
+    # run it using the django management server.
     command: sh -c "python manage.py runserver 0.0.0.0:8000"
     volumes:
       - ./app:/app
